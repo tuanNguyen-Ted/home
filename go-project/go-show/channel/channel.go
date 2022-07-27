@@ -1,10 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func main() {
-	unbuffer := make(chan string)
+	unbuffer := make(chan string, 1)
 	unbuffer <- "Có làm thì mới có ăn"
+
 	fmt.Println(<-unbuffer)
 }
 
