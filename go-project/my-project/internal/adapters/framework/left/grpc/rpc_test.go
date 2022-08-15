@@ -9,10 +9,11 @@ import (
 	"my-project/internal/adapters/framework/right/db"
 	"my-project/internal/ports"
 	"net"
-	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 )
 
@@ -31,8 +32,10 @@ func init() {
 	var appAdapter ports.APIPort
 	var gRPCAdapter ports.GRPCPort
 
-	dbaseDriver := os.Getenv("DB_DRIVER")
-	dsourceName := os.Getenv("DS_NAME")
+	// dbaseDriver := os.Getenv("DB_DRIVER")
+	// dsourceName := os.Getenv("DS_NAME")
+	dbaseDriver := "mysql"
+	dsourceName := "root:admin@tcp(127.0.0.1:3306)/my_project"
 
 	dbaseAdapter, err = db.NewAdapter(dbaseDriver, dsourceName)
 	if err != nil {
@@ -60,9 +63,83 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 }
 
 func getGRPCConnecttion(ctx context.Context, t *testing.T) *grpc.ClientConn {
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure)
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
 	return conn
+}
+
+func TestGetAddition(t *testing.T) {
+	ctx := context.Background()
+	conn := getGRPCConnecttion(ctx, t)
+	defer conn.Close()
+
+	client := pb.NewArithmeticServiceClient(conn)
+
+	params := &pb.OperationParameters{
+		A: 1,
+		B: 1,
+	}
+
+	answer, err := client.GetAddition(ctx, params)
+	if err != nil {
+		t.Fatalf("expected: %v, got: %v", nil, err)
+	}
+	require.Equal(t, answer.Value, int32(2))
+}
+
+func TestGetSubtraction(t *testing.T) {
+	ctx := context.Background()
+	conn := getGRPCConnecttion(ctx, t)
+	defer conn.Close()
+
+	client := pb.NewArithmeticServiceClient(conn)
+
+	params := &pb.OperationParameters{
+		A: 1,
+		B: 1,
+	}
+
+	answer, err := client.GetSubtraction(ctx, params)
+	if err != nil {
+		t.Fatalf("expected: %v, got: %v", nil, err)
+	}
+	require.Equal(t, answer.Value, int32(0))
+}
+func TestGetMultiplication(t *testing.T) {
+	ctx := context.Background()
+	conn := getGRPCConnecttion(ctx, t)
+	defer conn.Close()
+
+	client := pb.NewArithmeticServiceClient(conn)
+
+	params := &pb.OperationParameters{
+		A: 1,
+		B: 1,
+	}
+
+	answer, err := client.GetMultiplication(ctx, params)
+	if err != nil {
+		t.Fatalf("expected: %v, got: %v", nil, err)
+	}
+	require.Equal(t, answer.Value, int32(1))
+}
+func TestGetDivision(t *testing.T) {
+	ctx := context.Background()
+	conn := getGRPCConnecttion(ctx, t)
+	defer conn.Close()
+
+	client := pb.NewArithmeticServiceClient(conn)
+
+	params := &pb.OperationParameters{
+		A: 1,
+		B: 1,
+	}
+
+	answer, err := client.GetDivision(ctx, params)
+	if err != nil {
+		t.Fatalf("expected: %v, got: %v", nil, err)
+	}
+	require.Equal(t, answer.Value, int32(1))
 }
